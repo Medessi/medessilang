@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDESSI - Mini Compilateur</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .panel h3 {
+            color: #5a5a5a;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .run-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .run-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .clear-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .clear-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+        }
+
+        .example-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .example-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .output {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            min-height: 300px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            border: 2px solid #333;
+        }
+
+        .error {
+            color: #ff6b6b !important;
+        }
+
+        .success {
+            color: #4CAF50 !important;
+        }
+
+        .info {
+            color: #2196F3 !important;
+        }
+
+        .syntax-guide {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .syntax-guide h3 {
+            color: #5a5a5a;
+            margin-bottom: 15px;
+        }
+
+        .syntax-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .syntax-item code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 200px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 MEDESSI</h1>
+            <p class="subtitle">Mini Compilateur - Langage de Programmation Inventé</p>
+        </div>
+
+        <div class="main-content">
+            <div class="panel">
+                <h3>📝 Code MEDESSI</h3>
+                <textarea id="codeInput" placeholder="Écrivez votre code MEDESSI ici...">// Exemple de code MEDESSI
+affiche("Bonjour le monde !")
+var nom = "Alice"
+var age = 25
+affiche("Je m'appelle " + nom + " et j'ai " + age + " ans")
+
+si age > 18 alors
+    affiche("Je suis majeur")
+sinon
+    affiche("Je suis mineur")
+fin
+
+var i = 0
+tant_que i < 5 faire
+    affiche("Compteur: " + i)
+    i = i + 1
+fin
+
+affiche("Fin du programme")</textarea>
+            </div>
+
+            <div class="panel">
+                <h3>💻 Sortie</h3>
+                <div id="output" class="output">Cliquez sur "Exécuter" pour voir le résultat...</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="run-btn" onclick="runCode()">
+                ▶️ Exécuter
+            </button>
+            <button class="example-btn" onclick="loadExample()">
+                📄 Exemple
+            </button>
+            <button class="clear-btn" onclick="clearAll()">
+                🗑️ Effacer
+            </button>
+        </div>
+
+        <div class="syntax-guide">
+            <h3>📖 Guide de Syntaxe MEDESSI</h3>
+            <div class="syntax-item">
+                <strong>Affichage :</strong> <code>affiche("texte")</code> ou <code>affiche(variable)</code>
+            </div>
+            <div class="syntax-item">
+                <strong>Variables :</strong> <code>var nom = "valeur"</code> ou <code>var nombre = 42</code>
+            </div>
+            <div class="syntax-item">
+                <strong>Conditions :</strong> <code>si condition alors ... sinon ... fin</code>
+            </div>
+            <div class="syntax-item">
+                <strong>Boucles :</strong> <code>tant_que condition faire ... fin</code>
+            </div>
+            <div class="syntax-item">
+                <strong>Opérateurs :</strong> <code>+, -, *, /, ==, !=, <, >, <=, >=</code>
+            </div>
+            <div class="syntax-item">
+                <strong>Commentaires :</strong> <code>// commentaire sur une ligne</code>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tokenizer
+        class Token {
+            constructor(type, value, line = 1) {
+                this.type = type;
+                this.value = value;
+                this.line = line;
+            }
+        }
+
+        class Lexer {
+            constructor(text) {
+                this.text = text;
+                this.pos = 0;
+                this.line = 1;
+                this.tokens = [];
+            }
+
+            error(message) {
+                throw new Error(`Erreur lexicale ligne ${this.line}: ${message}`);
+            }
+
+            peek(offset = 0) {
+                const pos = this.pos + offset;
+                return pos < this.text.length ? this.text[pos] : null;
+            }
+
+            advance() {
+                if (this.pos < this.text.length && this.text[this.pos] === '\n') {
+                    this.line++;
+                }
+                this.pos++;
+            }
+
+            skipWhitespace() {
+                while (this.pos < this.text.length && /\s/.test(this.text[this.pos])) {
+                    this.advance();
+                }
+            }
+
+            skipComment() {
+                if (this.peek() === '/' && this.peek(1) === '/') {
+                    while (this.pos < this.text.length && this.text[this.pos] !== '\n') {
+                        this.advance();
+                    }
+                }
+            }
+
+            readString() {
+                let value = '';
+                this.advance(); // Skip opening quote
+                while (this.pos < this.text.length && this.text[this.pos] !== '"') {
+                    if (this.text[this.pos] === '\\') {
+                        this.advance();
+                        if (this.pos < this.text.length) {
+                            const escaped = this.text[this.pos];
+                            switch (escaped) {
+                                case 'n': value += '\n'; break;
+                                case 't': value += '\t'; break;
+                                case 'r': value += '\r'; break;
+                                case '\\': value += '\\'; break;
+                                case '"': value += '"'; break;
+                                default: value += escaped; break;
+                            }
+                        }
+                    } else {
+                        value += this.text[this.pos];
+                    }
+                    this.advance();
+                }
+                if (this.pos >= this.text.length) {
+                    this.error('Chaîne non fermée');
+                }
+                this.advance(); // Skip closing quote
+                return value;
+            }
+
+            readNumber() {
+                let value = '';
+                while (this.pos < this.text.length && /[\d.]/.test(this.text[this.pos])) {
+                    value += this.text[this.pos];
+                    this.advance();
+                }
+                return parseFloat(value);
+            }
+
+            readIdentifier() {
+                let value = '';
+                while (this.pos < this.text.length && /[a-zA-Z0-9_]/.test(this.text[this.pos])) {
+                    value += this.text[this.pos];
+                    this.advance();
+                }
+                return value;
+            }
+
+            tokenize() {
+                while (this.pos < this.text.length) {
+                    this.skipWhitespace();
+                    
+                    if (this.pos >= this.text.length) break;
+
+                    this.skipComment();
+                    if (this.pos >= this.text.length) break;
+
+                    const char = this.text[this.pos];
+
+                    // Strings
+                    if (char === '"') {
+                        this.tokens.push(new Token('STRING', this.readString(), this.line));
+                        continue;
+                    }
+
+                    // Numbers
+                    if (/\d/.test(char)) {
+                        this.tokens.push(new Token('NUMBER', this.readNumber(), this.line));
+                        continue;
+                    }
+
+                    // Operators
+                    if (char === '=' && this.peek(1) === '=') {
+                        this.tokens.push(new Token('EQ', '==', this.line));
+                        this.advance();
+                        this.advance();
+                        continue;
+                    }
+
+                    if (char === '!' && this.peek(1) === '=') {
+                        this.tokens.push(new Token('NE', '!=', this.line));
+                        this.advance();
+                        this.advance();
+                        continue;
+                    }
+
+                    if (char === '<' && this.peek(1) === '=') {
+                        this.tokens.push(new Token('LE', '<=', this.line));
+                        this.advance();
+                        this.advance();
+                        continue;
+                    }
+
+                    if (char === '>' && this.peek(1) === '=') {
+                        this.tokens.push(new Token('GE', '>=', this.line));
+                        this.advance();
+                        this.advance();
+                        continue;
+                    }
+
+                    // Single character tokens
+                    const singleTokens = {
+                        '=': 'ASSIGN',
+                        '+': 'PLUS',
+                        '-': 'MINUS',
+                        '*': 'MULTIPLY',
+                        '/': 'DIVIDE',
+                        '<': 'LT',
+                        '>': 'GT',
+                        '(': 'LPAREN',
+                        ')': 'RPAREN',
+                        '\n': 'NEWLINE'
+                    };
+
+                    if (singleTokens[char]) {
+                        this.tokens.push(new Token(singleTokens[char], char, this.line));
+                        this.advance();
+                        continue;
+                    }
+
+                    // Keywords and identifiers
+                    if (/[a-zA-Z_]/.test(char)) {
+                        const identifier = this.readIdentifier();
+                        const keywords = {
+                            'affiche': 'PRINT',
+                            'var': 'VAR',
+                            'si': 'IF',
+                            'alors': 'THEN',
+                            'sinon': 'ELSE',
+                            'fin': 'END',
+                            'tant_que': 'WHILE',
+                            'faire': 'DO'
+                        };
+                        const tokenType = keywords[identifier] || 'IDENTIFIER';
+                        this.tokens.push(new Token(tokenType, identifier, this.line));
+                        continue;
+                    }
+
+                    this.error(`Caractère inattendu: '${char}'`);
+                }
+
+                this.tokens.push(new Token('EOF', null, this.line));
+                return this.tokens;
+            }
+        }
+
+        // AST Nodes
+        class ASTNode {}
+
+        class Program extends ASTNode {
+            constructor(statements) {
+                super();
+                this.statements = statements;
+            }
+        }
+
+        class PrintStatement extends ASTNode {
+            constructor(expression) {
+                super();
+                this.expression = expression;
+            }
+        }
+
+        class VarDeclaration extends ASTNode {
+            constructor(name, value) {
+                super();
+                this.name = name;
+                this.value = value;
+            }
+        }
+
+        class Assignment extends ASTNode {
+            constructor(name, value) {
+                super();
+                this.name = name;
+                this.value = value;
+            }
+        }
+
+        class IfStatement extends ASTNode {
+            constructor(condition, thenBlock, elseBlock = null) {
+                super();
+                this.condition = condition;
+                this.thenBlock = thenBlock;
+                this.elseBlock = elseBlock;
+            }
+        }
+
+        class WhileStatement extends ASTNode {
+            constructor(condition, body) {
+                super();
+                this.condition = condition;
+                this.body = body;
+            }
+        }
+
+        class BinaryOp extends ASTNode {
+            constructor(left, operator, right) {
+                super();
+                this.left = left;
+                this.operator = operator;
+                this.right = right;
+            }
+        }
+
+        class Literal extends ASTNode {
+            constructor(value) {
+                super();
+                this.value = value;
+            }
+        }
+
+        class Variable extends ASTNode {
+            constructor(name) {
+                super();
+                this.name = name;
+            }
+        }
+
+        // Parser
+        class Parser {
+            constructor(tokens) {
+                this.tokens = tokens;
+                this.pos = 0;
+            }
+
+            error(message) {
+                const token = this.currentToken();
+                throw new Error(`Erreur de syntaxe ligne ${token.line}: ${message}`);
+            }
+
+            currentToken() {
+                return this.pos < this.tokens.length ? this.tokens[this.pos] : new Token('EOF', null);
+            }
+
+            peek(offset = 1) {
+                const pos = this.pos + offset;
+                return pos < this.tokens.length ? this.tokens[pos] : new Token('EOF', null);
+            }
+
+            consume(expectedType = null) {
+                const token = this.currentToken();
+                if (expectedType && token.type !== expectedType) {
+                    this.error(`Attendu ${expectedType}, trouvé ${token.type}`);
+                }
+                this.pos++;
+                return token;
+            }
+
+            skipNewlines() {
+                while (this.currentToken().type === 'NEWLINE') {
+                    this.consume();
+                }
+            }
+
+            parse() {
+                const statements = [];
+                this.skipNewlines();
+
+                while (this.currentToken().type !== 'EOF') {
+                    const stmt = this.parseStatement();
+                    if (stmt) statements.push(stmt);
+                    this.skipNewlines();
+                }
+
+                return new Program(statements);
+            }
+
+            parseStatement() {
+                const token = this.currentToken();
+
+                switch (token.type) {
+                    case 'PRINT':
+                        return this.parsePrintStatement();
+                    case 'VAR':
+                        return this.parseVarDeclaration();
+                    case 'IF':
+                        return this.parseIfStatement();
+                    case 'WHILE':
+                        return this.parseWhileStatement();
+                    case 'IDENTIFIER':
+                        return this.parseAssignment();
+                    case 'NEWLINE':
+                        this.consume();
+                        return null;
+                    default:
+                        this.error(`Instruction inattendue: ${token.type}`);
+                }
+            }
+
+            parsePrintStatement() {
+                this.consume('PRINT');
+                this.consume('LPAREN');
+                const expr = this.parseExpression();
+                this.consume('RPAREN');
+                return new PrintStatement(expr);
+            }
+
+            parseVarDeclaration() {
+                this.consume('VAR');
+                const name = this.consume('IDENTIFIER').value;
+                this.consume('ASSIGN');
+                const value = this.parseExpression();
+                return new VarDeclaration(name, value);
+            }
+
+            parseAssignment() {
+                const name = this.consume('IDENTIFIER').value;
+                this.consume('ASSIGN');
+                const value = this.parseExpression();
+                return new Assignment(name, value);
+            }
+
+            parseIfStatement() {
+                this.consume('IF');
+                const condition = this.parseExpression();
+                this.consume('THEN');
+                this.skipNewlines();
+
+                const thenBlock = [];
+                while (this.currentToken().type !== 'ELSE' && 
+                       this.currentToken().type !== 'END' && 
+                       this.currentToken().type !== 'EOF') {
+                    const stmt = this.parseStatement();
+                    if (stmt) thenBlock.push(stmt);
+                    this.skipNewlines();
+                }
+
+                let elseBlock = null;
+                if (this.currentToken().type === 'ELSE') {
+                    this.consume('ELSE');
+                    this.skipNewlines();
+                    elseBlock = [];
+                    while (this.currentToken().type !== 'END' && this.currentToken().type !== 'EOF') {
+                        const stmt = this.parseStatement();
+                        if (stmt) elseBlock.push(stmt);
+                        this.skipNewlines();
+                    }
+                }
+
+                this.consume('END');
+                return new IfStatement(condition, thenBlock, elseBlock);
+            }
+
+            parseWhileStatement() {
+                this.consume('WHILE');
+                const condition = this.parseExpression();
+                this.consume('DO');
+                this.skipNewlines();
+
+                const body = [];
+                while (this.currentToken().type !== 'END' && this.currentToken().type !== 'EOF') {
+                    const stmt = this.parseStatement();
+                    if (stmt) body.push(stmt);
+                    this.skipNewlines();
+                }
+
+                this.consume('END');
+                return new WhileStatement(condition, body);
+            }
+
+            parseExpression() {
+                return this.parseComparison();
+            }
+
+            parseComparison() {
+                let node = this.parseArithmetic();
+
+                while (['EQ', 'NE', 'LT', 'GT', 'LE', 'GE'].includes(this.currentToken().type)) {
+                    const operator = this.consume();
+                    const right = this.parseArithmetic();
+                    node = new BinaryOp(node, operator.type, right);
+                }
+
+                return node;
+            }
+
+            parseArithmetic() {
+                let node = this.parseTerm();
+
+                while (['PLUS', 'MINUS'].includes(this.currentToken().type)) {
+                    const operator = this.consume();
+                    const right = this.parseTerm();
+                    node = new BinaryOp(node, operator.type, right);
+                }
+
+                return node;
+            }
+
+            parseTerm() {
+                let node = this.parseFactor();
+
+                while (['MULTIPLY', 'DIVIDE'].includes(this.currentToken().type)) {
+                    const operator = this.consume();
+                    const right = this.parseFactor();
+                    node = new BinaryOp(node, operator.type, right);
+                }
+
+                return node;
+            }
+
+            parseFactor() {
+                const token = this.currentToken();
+
+                if (token.type === 'NUMBER') {
+                    this.consume();
+                    return new Literal(token.value);
+                }
+
+                if (token.type === 'STRING') {
+                    this.consume();
+                    return new Literal(token.value);
+                }
+
+                if (token.type === 'IDENTIFIER') {
+                    this.consume();
+                    return new Variable(token.value);
+                }
+
+                if (token.type === 'LPAREN') {
+                    this.consume('LPAREN');
+                    const node = this.parseExpression();
+                    this.consume('RPAREN');
+                    return node;
+                }
+
+                this.error(`Expression inattendue: ${token.type}`);
+            }
+        }
+
+        // Interpreter
+        class Interpreter {
+            constructor() {
+                this.variables = {};
+                this.output = [];
+            }
+
+            error(message) {
+                throw new Error(`Erreur d'exécution: ${message}`);
+            }
+
+            interpret(ast) {
+                this.output = [];
+                this.variables = {};
+                return this.visit(ast);
+            }
+
+            visit(node) {
+                const methodName = `visit${node.constructor.name}`;
+                const method = this[methodName];
+                if (!method) {
+                    throw new Error(`Méthode ${methodName} non trouvée`);
+                }
+                return method.call(this, node);
+            }
+
+            visitProgram(node) {
+                for (const statement of node.statements) {
+                    this.visit(statement);
+                }
+                return this.output.join('\n');
+            }
+
+            visitPrintStatement(node) {
+                const value = this.visit(node.expression);
+                this.output.push(String(value));
+            }
+
+            visitVarDeclaration(node) {
+                const value = this.visit(node.value);
+                this.variables[node.name] = value;
+            }
+
+            visitAssignment(node) {
+                const value = this.visit(node.value);
+                if (!(node.name in this.variables)) {
+                    this.error(`Variable '${node.name}' n'est pas définie`);
+                }
+                this.variables[node.name] = value;
+            }
+
+            visitIfStatement(node) {
+                const condition = this.visit(node.condition);
+                if (condition) {
+                    for (const stmt of node.thenBlock) {
+                        this.visit(stmt);
+                    }
+                } else if (node.elseBlock) {
+                    for (const stmt of node.elseBlock) {
+                        this.visit(stmt);
+                    }
+                }
+            }
+
+            visitWhileStatement(node) {
+                let iterations = 0;
+                const maxIterations = 10000;
+
+                while (this.visit(node.condition)) {
+                    if (iterations++ > maxIterations) {
+                        this.error('Boucle infinie détectée (plus de 10000 itérations)');
+                    }
+                    for (const stmt of node.body) {
+                        this.visit(stmt);
+                    }
+                }
+            }
+
+            visitBinaryOp(node) {
+                const left = this.visit(node.left);
+                const right = this.visit(node.right);
+
+                switch (node.operator) {
+                    case 'PLUS':
+                        return left + right;
+                    case 'MINUS':
+                        return left - right;
+                    case 'MULTIPLY':
+                        return left * right;
+                    case 'DIVIDE':
+                        if (right === 0) this.error('Division par zéro');
+                        return left / right;
+                    case 'EQ':
+                        return left === right;
+                    case 'NE':
+                        return left !== right;
+                    case 'LT':
+                        return left < right;
+                    case 'GT':
+                        return left > right;
+                    case 'LE':
+                        return left <= right;
+                    case 'GE':
+                        return left >= right;
+                    default:
+                        this.error(`Opérateur inconnu: ${node.operator}`);
+                }
+            }
+
+            visitLiteral(node) {
+                return node.value;
+            }
+
+            visitVariable(node) {
+                if (!(node.name in this.variables)) {
+                    this.error(`Variable '${node.name}' n'est pas définie`);
+                }
+                return this.variables[node.name];
+            }
+        }
+
+        // Main execution function
+        function runCode() {
+            const code = document.getElementById('codeInput').value;
+            const output = document.getElementById('output');
+
+            if (!code.trim()) {
+                output.innerHTML = '<span class="error">❌ Aucun code à exécuter</span>';
+                return;
+            }
+
+            try {
+                output.innerHTML = '<span class="info">🔄 Compilation en cours...</span>';
+                
+                // Tokenization
+                const lexer = new Lexer(code);
+                const tokens = lexer.tokenize();
+                
+                // Parsing
+                const parser = new Parser(tokens);
+                const ast = parser.parse();
+                
+                // Interpretation
+                const interpreter = new Interpreter();
+                const result = interpreter.interpret(ast);
+                
+                output.innerHTML = `<span class="success">✅ Exécution réussie:</span>\n\n${result || '(Aucune sortie)'}`;
+                
+            } catch (error) {
+                output.innerHTML = `<span class="error">❌ ${error.message}</span>`;
+            }
+        }
+
+        function loadExample() {
+            const example = `// Exemple complet MEDESSI
+affiche("=== Programme de démonstration ===")
+
+// Variables et calculs
+var nom = "Bob"
+var age = 30
+var salaire = 2500.50
+
+affiche("Bonjour " + nom + " !")
+affiche("Vous avez " + age + " ans")
+affiche("Votre salaire: " + salaire + " euros")
+
+// Conditions
+si age >= 18 alors
+    affiche("Vous êtes majeur")
+    si salaire > 2000 alors
+        affiche("Bon salaire !")
+    sinon
+        affiche("Salaire modeste")
+    fin
+sinon  
+    affiche("Vous êtes mineur")
+fin
+
+// Boucle avec calcul
+affiche("\\nTable de multiplication de 7:")
+var i = 1
+tant_que i <= 5 faire
+    var resultat = 7 * i
+    affiche("7 x " + i + " = " + resultat)
+    i = i + 1
+fin
+
+// Compteur dégressif
+affiche("\\nCompte à rebours:")
+var compte = 5
+tant_que compte > 0 faire
+    affiche("T-" + compte)
+    compte = compte - 1
+fin
+affiche("🚀 Décollage !")`;
+
+            document.getElementById('codeInput').value = example;
+        }
+
+        function clearAll() {
+            document.getElementById('codeInput').value = '';
+            document.getElementById('output').innerHTML = 'Sortie effacée...';
+        }
+
+        // Initialize with example
+        window.onload = function() {
+            loadExample();
+        };
+    </script>
+</body>
+</html>
